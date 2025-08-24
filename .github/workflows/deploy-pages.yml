@@ -18,21 +18,42 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Download merged Allure results
+      - name: Download Allure results (Chromium)
         uses: actions/download-artifact@v4
         with:
-          name: allure-results
-          path: allure-results
+          name: allure-results-chromium
+          path: allure-results/chromium
 
-      - name: Generate Allure HTML report
+      - name: Generate Allure HTML report (Chromium)
         uses: simple-elf/allure-report-action@v1.9
         with:
-          allure_results: allure-results
+          allure_results: allure-results/chromium
+
+      - name: Move Chromium report
+        run: |
+          mkdir -p allure-merged/chromium
+          cp -r allure-report/* allure-merged/chromium/
+
+      - name: Download Allure results (Firefox)
+        uses: actions/download-artifact@v4
+        with:
+          name: allure-results-firefox
+          path: allure-results/firefox
+
+      - name: Generate Allure HTML report (Firefox)
+        uses: simple-elf/allure-report-action@v1.9
+        with:
+          allure_results: allure-results/firefox
+
+      - name: Move Firefox report
+        run: |
+          mkdir -p allure-merged/firefox
+          cp -r allure-report/* allure-merged/firefox/
 
       - name: Upload report as Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: allure-report
+          path: allure-merged
 
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4
