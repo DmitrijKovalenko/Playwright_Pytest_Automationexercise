@@ -89,6 +89,7 @@ def test_place_order_register_while_checkout(
     payment_page.is_visible_order_placed_succesfull_message()
 
     with page.expect_download() as download_info:
+        download = page.wait_for_event("download", timeout=60000)
         payment_page.click_download_invoice()
         download = download_info.value
         download_path = os.path.join(os.getcwd(), download.suggested_filename)

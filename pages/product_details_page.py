@@ -120,3 +120,6 @@ class ProductDetailsPage(BasePage):
     @allure.step("Verify 'Thank you for your review.' message is visible")
     def is_visible_thanks_submit_message(self):
         return self.thanks_submit_message.is_visible()
+    
+    def wait_for_review_form(self):
+        self.page.wait_for_selector("#review-form", state="visible", timeout=60000)
