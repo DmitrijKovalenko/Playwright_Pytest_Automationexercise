@@ -9,7 +9,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    needs: []
     permissions:
       contents: write
       pages: write
@@ -19,20 +19,31 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Download Allure results
+      - name: Download Allure results (Chromium)
         uses: actions/download-artifact@v4
         with:
-          name: allure-results
-          path: allure-results
+          name: allure-results-chromium
+          path: allure-results/chromium
+
+      - name: Download Allure results (Firefox)
+        uses: actions/download-artifact@v4
+        with:
+          name: allure-results-firefox
+          path: allure-results/firefox
+
+      - name: Merge Allure results
+        run: |
+          mkdir -p merged-results
+          cp -r allure-results/chromium/* merged-results/ || true
+          cp -r allure-results/firefox/* merged-results/ || true
 
       - name: Generate Allure HTML report
         uses: simple-elf/allure-report-action@v1.9
         with:
-          allure_results: allure-results
-          gh_pages: allure-report
+          allure_results: merged-results
 
       - name: Upload report as Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: allure-report
 
