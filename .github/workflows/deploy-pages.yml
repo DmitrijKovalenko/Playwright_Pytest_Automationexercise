@@ -30,7 +30,7 @@ jobs:
           allure_results: allure-results
 
       - name: Upload report as Pages artifact
-        uses: actions/upload-pages-artifact@v2
+        uses: actions/upload-pages-artifact@v4
         with:
           path: allure-report
 
