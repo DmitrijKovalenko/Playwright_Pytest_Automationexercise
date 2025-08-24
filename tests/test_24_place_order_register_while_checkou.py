@@ -88,16 +88,14 @@ def test_place_order_register_while_checkout(
     payment_page.click_pay_and_confirm_button()
     payment_page.is_visible_order_placed_succesfull_message()
 
+
     with page.expect_download() as download_info:
-        download = page.wait_for_event("download", timeout=60000)
         payment_page.click_download_invoice()
         download = download_info.value
         download_path = os.path.join(os.getcwd(), download.suggested_filename)
         download.save_as(download_path)
-
-    assert os.path.exists(download_path)
-
-    os.remove(download_path)
+        assert os.path.exists(download_path)
+        os.remove(download_path)
     payment_page.click_continue_button()
     home_page.click_delete_account()
     account_deleted_page.is_visible_title_account_deletedd()
