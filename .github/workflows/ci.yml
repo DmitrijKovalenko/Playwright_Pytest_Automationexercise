@@ -13,11 +13,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      actions: write 
-    
+      actions: write
+
     strategy:
       matrix:
-        browser: [chromium, firefox ]
+        browser: [chromium, firefox]
 
     steps:
       - name: Checkout repository
@@ -37,7 +37,6 @@ jobs:
             ${{ runner.os }}-pip-
 
       - name: Cache Playwright browsers
-        id: cache-playwright
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
@@ -54,19 +53,14 @@ jobs:
       - name: Run tests
         run: pytest --alluredir=allure-results --browser=${{ matrix.browser }}
 
-      - name: Upload Allure results
+      - name: Move results to merged folder
+        run: |
+          mkdir -p allure-merged/${{ matrix.browser }}
+          cp -r allure-results/* allure-merged/${{ matrix.browser }}/
+
+      - name: Upload merged Allure results
         uses: actions/upload-artifact@v4
         with:
-          name: allure-results-${{ matrix.browser }}
-          path: allure-results
+          name: allure-results
+          path: allure-merged
           retention-days: 7
-
-      - name: Send Slack Notification
-        uses: rtCamp/action-slack-notify@v2
-        if: always()
-        env:
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_MESSAGE: |
-            *GitHub Actions Report* :white_check_mark: Playwright tests completed on ${{ matrix.browser }}!
-            <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>
-            <https://<YOUR_USER>.github.io/<YOUR_REPO>|Allure Report>
