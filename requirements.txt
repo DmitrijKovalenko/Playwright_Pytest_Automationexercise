@@ -1,6 +1,6 @@
-pytest==7.3.1
-pytest-playwright==0.5.2
-allure-pytest==2.15.0
-pytest-xdist==3.8.0
-slack-sdk==3.24.0
-faker==25.8.0
+pytest
+pytest-playwright
+allure-pytest
+pytest-xdist
+slack-sdk
+Faker
