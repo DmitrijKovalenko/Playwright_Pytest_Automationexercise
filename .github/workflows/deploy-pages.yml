@@ -1,0 +1,36 @@
+name: Deploy Allure Report
+
+on:
+  workflow_run:
+    workflows: ["CI Tests"]
+    types:
+      - completed
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download all Allure results
+        uses: actions/download-artifact@v4
+        with:
+          name: allure-results
+          path: allure-results
+
+      - name: Generate Allure HTML report
+        uses: simple-elf/allure-report-action@v1.9
+        with:
+          allure_results: allure-results
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
+        with:
+          publish_dir: allure-report

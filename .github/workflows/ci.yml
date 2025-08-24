@@ -1,0 +1,55 @@
+name: CI Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write 
+    
+    strategy:
+      matrix:
+        browser: [chromium, firefox, webkit]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          playwright install ${{ matrix.browser }}
+
+      - name: Run tests
+        run: pytest --alluredir=allure-results --browser=${{ matrix.browser }}
+
+      - name: Upload Allure results
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results
+          path: allure-results
+          retention-days: 7
+
+      - name: Send Slack Notification
+        uses: rtCamp/action-slack-notify@v2
+        if: always()
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_MESSAGE: |
+            *GitHub Actions Report* :white_check_mark: Playwright tests completed on ${{ matrix.browser }}!
+            <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>
+            <https://<YOUR_USER>.github.io/<YOUR_REPO>|Allure Report>
