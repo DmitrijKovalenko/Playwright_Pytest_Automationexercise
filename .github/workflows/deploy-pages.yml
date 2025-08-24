@@ -28,7 +28,6 @@ jobs:
         uses: simple-elf/allure-report-action@v1.9
         with:
           allure_results: allure-results
-          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4
