@@ -32,11 +32,10 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
-          playwright install ${{ matrix.browser }}
-          playwright install --with-deps
+          playwright install --with-deps 
 
       - name: Run tests
-        run: pytest --alluredir=allure-results --browser=${{ matrix.browser }}
+        run: pytest --alluredir=allure-results --browser=${{ matrix.browser }} --headless
 
       - name: Upload Allure results
         uses: actions/upload-artifact@v4
