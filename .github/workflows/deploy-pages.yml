@@ -33,7 +33,7 @@ jobs:
       - name: Move Chromium report
         run: |
           mkdir -p allure-merged/chromium
-          mv allure-report/* allure-merged/chromium/
+          cp -r allure-report/* allure-merged/chromium/
 
       - name: Download Allure results (Firefox)
         uses: actions/download-artifact@v4
@@ -49,7 +49,7 @@ jobs:
       - name: Move Firefox report
         run: |
           mkdir -p allure-merged/firefox
-          mv allure-report/* allure-merged/firefox/
+          cp -r allure-report/* allure-merged/firefox/
 
       - name: Upload report as Pages artifact
         uses: actions/upload-pages-artifact@v4
