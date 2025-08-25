@@ -14,7 +14,7 @@ jobs:
       actions: write
       pages: write
       id-token: write
-
+      
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -31,13 +31,12 @@ jobs:
               repo,
               run_id
             });
-
+            
             const fs = require('fs').promises;
-            const path = require('path');
-            const admZip = require('adm-zip');
+            const AdmZip = require('adm-zip');
 
             await fs.mkdir('allure-results', { recursive: true });
-
+            
             for (const artifact of artifacts.data.artifacts) {
               if (artifact.name.startsWith('allure-results-')) {
                 console.log(`Downloading artifact: ${artifact.name}`);
@@ -48,7 +47,7 @@ jobs:
                   archive_format: 'zip'
                 });
 
-                const zip = new admZip(Buffer.from(download.data));
+                const zip = new AdmZip(Buffer.from(download.data));
                 zip.extractAllTo('allure-results', true);
               }
             }
@@ -57,7 +56,7 @@ jobs:
         uses: simple-elf/allure-report-action@v1.9
         with:
           allure_results: allure-results
-
+      
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4
         with:
