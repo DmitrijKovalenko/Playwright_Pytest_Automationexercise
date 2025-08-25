@@ -10,7 +10,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       actions: write
       pages: write
       id-token: write
@@ -21,13 +21,9 @@ jobs:
 
       - name: Download and Merge Allure results
         run: |
-          # 1. Створюємо папку для результатів
           mkdir -p allure-results
-          
-          # 2. Отримуємо список артефактів з батьківського ран-а
           artifacts_url=$(jq --raw-output '.workflow_run.artifacts_url' "${GITHUB_EVENT_PATH}")
           
-          # 3. Завантажуємо та розархівовуємо кожен артефакт
           curl -sS "${artifacts_url}" \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
@@ -44,8 +40,14 @@ jobs:
         uses: simple-elf/allure-report-action@v1.9
         with:
           allure_results: allure-results
-
+          
+      - name: Setup Pages
+        uses: actions/configure-pages@v5 
+        
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3 
+        with:
+          path: 'allure-report'
+          
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4
-        with:
-          publish_dir: allure-report
