@@ -10,7 +10,8 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
+      actions: write
       pages: write
       id-token: write
 
@@ -18,42 +19,46 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Download Allure results (Chromium)
-        uses: actions/download-artifact@v4
+      - name: Download all Allure results
+        uses: actions/github-script@v6
         with:
-          name: allure-results-chromium
-          path: allure-results/chromium
+          script: |
+            const { owner, repo } = context.repo;
+            const run_id = context.payload.workflow_run.id;
 
-      - name: Generate Allure HTML report (Chromium)
+            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+              owner,
+              repo,
+              run_id
+            });
+
+            const fs = require('fs').promises;
+            const path = require('path');
+            const admZip = require('adm-zip');
+
+            await fs.mkdir('allure-results', { recursive: true });
+
+            for (const artifact of artifacts.data.artifacts) {
+              if (artifact.name.startsWith('allure-results-')) {
+                console.log(`Downloading artifact: ${artifact.name}`);
+                const download = await github.rest.actions.downloadArtifact({
+                  owner,
+                  repo,
+                  artifact_id: artifact.id,
+                  archive_format: 'zip'
+                });
+
+                const zip = new admZip(Buffer.from(download.data));
+                zip.extractAllTo('allure-results', true);
+              }
+            }
+
+      - name: Generate Allure HTML report
         uses: simple-elf/allure-report-action@v1.9
         with:
-          allure_results: allure-results/chromium
-
-      - name: Move Chromium report
-        run: |
-          mkdir -p allure-merged/chromium
-          cp -r allure-report/* allure-merged/chromium/
-
-      - name: Download Allure results (Firefox)
-        uses: actions/download-artifact@v4
-        with:
-          name: allure-results-firefox
-          path: allure-results/firefox
-
-      - name: Generate Allure HTML report (Firefox)
-        uses: simple-elf/allure-report-action@v1.9
-        with:
-          allure_results: allure-results/firefox
-
-      - name: Move Firefox report
-        run: |
-          mkdir -p allure-merged/firefox
-          cp -r allure-report/* allure-merged/firefox/
-
-      - name: Upload report as Pages artifact
-        uses: actions/upload-pages-artifact@v4
-        with:
-          path: allure-merged
+          allure_results: allure-results
 
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4
+        with:
+          publish_dir: allure-report
