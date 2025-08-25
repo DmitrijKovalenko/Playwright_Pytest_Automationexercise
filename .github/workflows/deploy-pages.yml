@@ -10,53 +10,41 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       actions: write
       pages: write
       id-token: write
-      
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Download all Allure results
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const { owner, repo } = context.repo;
-            const run_id = context.payload.workflow_run.id;
-
-            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
-              owner,
-              repo,
-              run_id
-            });
-            
-            const fs = require('fs').promises;
-            const AdmZip = require('adm-zip');
-
-            await fs.mkdir('allure-results', { recursive: true });
-            
-            for (const artifact of artifacts.data.artifacts) {
-              if (artifact.name.startsWith('allure-results-')) {
-                console.log(`Downloading artifact: ${artifact.name}`);
-                const download = await github.rest.actions.downloadArtifact({
-                  owner,
-                  repo,
-                  artifact_id: artifact.id,
-                  archive_format: 'zip'
-                });
-
-                const zip = new AdmZip(Buffer.from(download.data));
-                zip.extractAllTo('allure-results', true);
-              }
-            }
+      - name: Download and Merge Allure results
+        run: |
+          # 1. Створюємо папку для результатів
+          mkdir -p allure-results
+          
+          # 2. Отримуємо список артефактів з батьківського ран-а
+          artifacts_url=$(jq --raw-output '.workflow_run.artifacts_url' "${GITHUB_EVENT_PATH}")
+          
+          # 3. Завантажуємо та розархівовуємо кожен артефакт
+          curl -sS "${artifacts_url}" \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            | jq --raw-output '.artifacts[] | select(.name | startswith("allure-results-")) | .archive_download_url' \
+            | while read -r url; do
+              curl -sL -o "artifact.zip" "${url}" \
+                -H "Accept: application/vnd.github+json" \
+                -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}"
+              unzip -o artifact.zip -d allure-results
+              rm artifact.zip
+            done
 
       - name: Generate Allure HTML report
         uses: simple-elf/allure-report-action@v1.9
         with:
           allure_results: allure-results
-      
+
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4
         with:
